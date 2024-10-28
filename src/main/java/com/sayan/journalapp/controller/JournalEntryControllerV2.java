@@ -9,6 +9,8 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -25,9 +27,11 @@ public class JournalEntryControllerV2 {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/{userName}")
-    public ResponseEntity<?> createEntry(@RequestBody JournalEntry journalEntry, @PathVariable String userName) {
+    @PostMapping
+    public ResponseEntity<?> createEntry(@RequestBody JournalEntry journalEntry) {
         try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
             journalEntryService.saveEntry(journalEntry, userName);
             return new ResponseEntity<>(journalEntry,HttpStatus.CREATED);
         }catch (Exception e){
@@ -35,9 +39,11 @@ public class JournalEntryControllerV2 {
         }
     }
 
-    @GetMapping("/{userName}")
-    public ResponseEntity<?> getAllJournalEntriesOfUser(@PathVariable String userName) {
-        User user = userService.findByUserName(userName);
+    @GetMapping
+    public ResponseEntity<?> getAllJournalEntriesOfUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String name = authentication.getName();
+        User user = userService.findByUserName(name);
         List<JournalEntry> all = user.getJournalEntries();
         if(all!=null && !all.isEmpty()) {
             return new ResponseEntity<>(all,HttpStatus.OK);
